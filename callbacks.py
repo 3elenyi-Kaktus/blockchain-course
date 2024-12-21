@@ -12,3 +12,6 @@ class Callback(str, Enum):
     # NEXT_PAGE_BET_MAKING = "next_page_bet_making"
     CHOSEN_BET_OPTION = "chosen_bet_option"
     APPROVE_BET_MAKING = "approve_bet_making"
+
+    EXIT_FROM_REGISTERING = "exit_from_registering"
+    APPROVE_REGISTER = "approve_register"

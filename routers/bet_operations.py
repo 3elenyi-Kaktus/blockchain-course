@@ -53,6 +53,7 @@ def at_exit(user_id: int):
     clear_chosen_bet(user_id)
     clear_chosen_option(user_id)
     clear_chosen_ether_value(user_id)
+    set_user_state(user_id, UserState.NONE)
 
 
 @bet_operations_router.message(Command("make_bet_router"))
@@ -72,8 +73,7 @@ async def make_bet(message: Message) -> None:
     # button_prev = InlineKeyboardButton(text="Previous page", callback_data=Callback.PREVIOUS_PAGE_BET_MAKING)
     # button_next = InlineKeyboardButton(text="Next page", callback_data=Callback.NEXT_PAGE_BET_MAKING)
 
-    # TODO: get list of active bet IDs from blockchain
-    bet_ids = storage.bets.keys()
+    bet_ids = storage.conn.getAvailableBets()
     buttons = []
     for bet_id in bet_ids:
         buttons += [[InlineKeyboardButton(text=storage.bets[bet_id].description,
@@ -134,8 +134,7 @@ async def selected_bet_id(callback_query: CallbackQuery) -> None:
     button_cancel = InlineKeyboardButton(text="Cancel", callback_data=Callback.EXIT_FROM_BET_MAKING)
     markup = InlineKeyboardMarkup(inline_keyboard=[[button_cancel]])
 
-    # TODO get user balance here from blockchain
-    user_balance = 1
+    user_balance = storage.conn.getBalance(callback_query.from_user.id)
 
     set_user_state(callback_query.from_user.id, UserState.CHOOSING_ETHER_AMOUNT_TO_BET)
     edited = await callback_query.message.edit_text(f"Bet ID: {bet_id}\n"
@@ -143,7 +142,7 @@ async def selected_bet_id(callback_query: CallbackQuery) -> None:
                                                     f"Chosen option --> {bet_info.get_bet_description()[bet_option + 1]}\n"
                                                     f"\n"
                                                     f"Please, enter how much ETH you want to bet\n"
-                                                    f"User balance: {user_balance}", reply_markup=markup)
+                                                    f"Your balance: {f'{user_balance:.18f}'.rstrip('0')}", reply_markup=markup)
     if isinstance(edited, bool):
         logging.critical(f"Could not edit bet making message")
 
@@ -179,8 +178,9 @@ async def approve_bet_making(callback_query: CallbackQuery) -> None:
     bet_info = storage.bets[bet_id]
 
     storage.user_wagers[callback_query.from_user.id] = (bet_id, bet_option, ether_amount)
+    storage.conn.makeBet(callback_query.from_user.id, bet_id, bet_option, int(ether_amount * (10 ** 18)))
 
-    edited = await callback_query.message.edit_text(f"Succesfully betted {ether_amount} ETH with bet ID: {bet_id}\n"
+    edited = await callback_query.message.edit_text(f"Succesfully betted {f'{ether_amount:.18f}'.rstrip('0')} ETH with bet ID: {bet_id}\n"
                                                     f"{bet_info.description}\n"
                                                     f"On option --> {bet_info.get_bet_description()[bet_option + 1]}",
                                                     reply_markup=None)

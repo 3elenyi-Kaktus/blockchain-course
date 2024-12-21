@@ -15,9 +15,11 @@ from bet import Bet
 from routers.bet_create import bet_create_router
 from routers.empty_stub import empty_stub_router
 from routers.bet_operations import bet_operations_router
+from routers.auth import auth_router
+
 
 dispatcher = Dispatcher()
-dispatcher.include_routers(bet_create_router, bet_operations_router, empty_stub_router)
+dispatcher.include_routers(bet_create_router, bet_operations_router, auth_router, empty_stub_router)
 
 
 

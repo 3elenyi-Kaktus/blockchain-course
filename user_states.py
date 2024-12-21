@@ -10,6 +10,8 @@ class UserState(str, Enum):
     CHOOSING_BET_ID = "choosing_bet_id"
     CHOOSING_ETHER_AMOUNT_TO_BET = "choosing_ether_amount_to_bet"
 
+    REGISTERING = "registering"
+
 
 
 user_states: dict[int, UserState] = {}

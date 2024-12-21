@@ -7,7 +7,7 @@ from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, C
 
 from bet import Bet
 from storage import storage
-from user_states import UserState, set_user_state, get_user_state
+from user_states import UserState, set_user_state, get_user_state, user_states
 from callbacks import Callback
 
 bet_create_router = Router(name=__name__)
@@ -28,9 +28,9 @@ def clear_bet_cache(user_id: int):
 
 
 def at_exit(user_id: int):
-    set_user_state(user_id, UserState.NONE)
     clear_last_message(user_id)
     clear_bet_cache(user_id)
+    set_user_state(user_id, UserState.NONE)
 
 
 @bet_create_router.message(Command("create_bet_sudo"))
@@ -98,7 +98,7 @@ async def add_option_to_bet(message: Message) -> None:
         button_yes = InlineKeyboardButton(text="Yes", callback_data=Callback.PROCEED_WITH_BET_CREATION)
         button_no = InlineKeyboardButton(text="No", callback_data=Callback.DISCARD_BET_CREATION)
         markup = InlineKeyboardMarkup(inline_keyboard=[[button_yes, button_no]])
-        answer = await message.answer(f"Bet \"{message.text}\".\n"
+        answer = await message.answer(f"Bet \"{bet_cache[message.from_user.id][0]}\".\n"
                                       f"--> {bet_cache[message.from_user.id][1]}\n"
                                       f"--> {bet_cache[message.from_user.id][2]}\n"
                                       f"Do you want to proceed?", reply_markup=markup)
@@ -110,8 +110,8 @@ async def proceed_with_bet_creation(callback_query: CallbackQuery) -> None:
     logging.info(f"proceed_with_bet_creation")
     await callback_query.answer(f"Creation approved...")
 
-    # TODO: force bet onto blockchain and return bet id
-    bet_id = len(storage.bets)
+    _ = storage.conn.createBet()
+    bet_id = len(storage.bets) + 1
     storage.bets[bet_id] = Bet(bet_id, bet_cache[callback_query.from_user.id][0], [bet_cache[callback_query.from_user.id][1], bet_cache[callback_query.from_user.id][2]])
 
     edit = await callback_query.message.edit_text(f"Bet was created! ID: {bet_id}", reply_markup=None)

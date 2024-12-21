@@ -18,12 +18,6 @@ contract UserBet {
         amount = _amount;
         choice = _choice;
     }
-
-    function clear() public permition {
-        id = 0;
-        amount = 0;
-        choice = false;
-    }
 }
 
 contract User {
@@ -48,7 +42,7 @@ contract User {
         uint256 amount,
         bool choice
     ) public permition {
-        require(bets[bet_id].id() != 0, "Bet is already laid");
+        require(address(bets[bet_id]) == address(0), "Bet is already laid");
         require(balance >= amount, "Not enough money");
         balance -= amount;
         bets[bet_id] = new UserBet(bet_id, amount, choice);
@@ -58,19 +52,20 @@ contract User {
         uint256 bet_id
     ) public permition returns (uint256, bool) {
         UserBet bet = bets[bet_id];
-        require(bet.id() == 0, "Bet was not laid");
-        uint256 amount = (9 * bets[bet_id].amount()) / 10;
+        require(address(bet) != address(0), "Bet was not laid");
+        uint256 amount = (9 * bet.amount()) / 10;
         balance += amount;
-        uint256 revert_commision = bets[bet_id].amount() - amount;
-        bets[bet_id].clear();
+        uint256 revert_commision = bet.amount() - amount;
+        bets[bet_id] = UserBet(address(0));
         return (revert_commision, bet.choice());
     }
 
-    function topUp(uint256 amount) public permition {
+    function deposit(uint256 amount) public permition {
         balance += amount;
     }
 
     function withdraw(uint256 amount) public permition {
+        require(balance >= amount, "Not enough money");
         balance -= amount;
     }
 
@@ -78,7 +73,7 @@ contract User {
         return balance;
     }
 
-    function myAddress() public view returns (address) {
+    function myUser() public view returns (address) {
         return user;
     }
 }
